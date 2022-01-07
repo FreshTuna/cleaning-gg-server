@@ -21,6 +21,10 @@ class SignUpView(View):
             tier          = data['tier']
             line          = data['line']
 
+            if Member.objects.filter(game_nickname=game_nickname).exists():
+                print("hey")
+                return JsonResponse({'MESSAGE':'GAME_NICKNAME_DUPLICATED'}, status=200)
+
             Member.objects.create(
                 nickname      = nickname,
                 game_nickname = game_nickname,
@@ -49,7 +53,7 @@ class SignInView(View):
             game_nickname = data['game_nickname']
 
             if not Member.objects.filter(game_nickname = game_nickname).exists():
-                return JsonResponse({'MESSAGE':'WRONG_EMAIL'}, status=400)
+                return JsonResponse({'MESSAGE':'WRONG_GAME_NICKNAME'}, status=400)
             
             member = Member.objects.get(game_nickname = game_nickname)
 
