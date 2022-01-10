@@ -22,7 +22,6 @@ class SignUpView(View):
             line          = data['line']
 
             if Member.objects.filter(game_nickname=game_nickname).exists():
-                print("hey")
                 return JsonResponse({'MESSAGE':'GAME_NICKNAME_DUPLICATED'}, status=200)
 
             Member.objects.create(

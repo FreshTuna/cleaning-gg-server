@@ -15,10 +15,10 @@ class Match(models.Model):
         ('CANCLED','Cancled'),
     ]
 
-    time     = models.IntegerField()
-    start_at = models.DateTimeField()
+    time     = models.IntegerField(null=True)
+    start_at = models.DateTimeField(null=True)
     owner    = models.IntegerField(null=True)
-    win_team = models.CharField(max_length=20, choices=TEAM_CHOICIES)
+    win_team = models.CharField(max_length=20, choices=TEAM_CHOICIES, null=True)
     status   = models.CharField(max_length=20, choices=STATUS_CHOICES)
 
     created_at = models.DateTimeField(auto_now_add=True)
