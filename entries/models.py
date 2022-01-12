@@ -2,7 +2,7 @@ from django.db import models
 
 # Create your models here.
 
-class Enrty(models.Model):
+class Entry(models.Model):
     match_id  = models.IntegerField()
     member_id = models.IntegerField()
     leader_yn = models.BooleanField(default=False)

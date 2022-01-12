@@ -34,17 +34,24 @@ class MatchCreateView(View):
         except TypeError:
             return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
 
-    class MatchGetView(View):
-        def get(self, request):
-            try:
-                
-                if not Match.objects.filter(status__in=['MATCHING','PLAYING']):
-                    return JsonResponse({'MESSAGE':'NO_MATCH'}, status=200)
+class MatchGetView(View):
+    def get(self, request):
+        try:
+            if not Match.objects.filter(status='MATCHING'):
+                return JsonResponse({'MESSAGE':'NO_MATCH'}, status=200)
 
-                return JsonResponse({'MESSAGE':'MATCH_CREATED'}, status=201)
-            except json.decoder.JSONDecodeError:
-                return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
-            except KeyError:
-                return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
-            except TypeError:
-                return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
+            match = Match.objects.get(status='MATCHING')
+
+            res_dict = {
+                'match_id': match.id,
+                'owner': match.owner,
+                'status': match.status,
+            }
+
+            return JsonResponse({'MESSAGE':'MATCH_JOINED', 'match':res_dict}, status=200)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)

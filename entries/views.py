@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
 
-from entries.models import Enrty
+from entries.models import Entry
 from matches.models import Match
 from members.models import Member
 
@@ -46,3 +46,21 @@ class EnrtyCreateView(View):
     def get(self, request):
         return JsonResponse({'MESSAGE':'USER_CREATED'}, status=201)
 
+class EntryGetView(View):
+
+    def get(self, request):
+        try:
+            match_id = request.GET['match_id']
+
+            entry_list =[{
+                'member_id': entry.member_id,
+                'match_id' : entry.match_id
+            } for entry in Entry.objects.filter(match_id=match_id)]
+
+            return JsonResponse({'entries':entry_list}, status=201)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
