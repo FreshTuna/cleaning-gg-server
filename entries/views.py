@@ -19,23 +19,34 @@ class EnrtyCreateView(View):
             game_nickname = data['game_nickname']
             match_id      = data['match_id'] 
 
-            if not Match.objects.filter(match_id=match_id).exits():
+            print(match_id)
+
+            if not Match.objects.filter(id=match_id).exists():
                 return JsonResponse({'MESSAGE':'NO_MATCH_EXISTING'}, status=200)
 
-            if Entry.objects.filter(match_id=match_id, game_nickname=game_nickname).exists():
+            member = Member.objects.get(game_nickname=game_nickname)
+
+            if Entry.objects.filter(match_id=match_id, member_id=member.id).exists():
                 return JsonResponse({'MESSAGE':'ENTRY_EXISTING'}, status=200)
 
             if Entry.objects.filter(match_id=match_id).count() > 9:
                 return JsonResponse({'MESSAGE':'ENTRY_FULL'}, status=200)
 
-            member = Member.objects.get(game_nickname=game_nickname)
-
-            Entry.create(
+            entry = Entry.objects.create(
                 match_id = match_id,
                 member_id = member.id
             )
 
-            return JsonResponse({'MESSAGE':'ENTRY_CREATED'}, status=201)
+            res = {
+                'match_id': match_id,
+                'entry_id': entry.id,
+                'member_id': member.id,
+                'game_nickname': member.game_nickname,
+                'tier': member.tier,
+                'nickname': member.nickname,
+            }
+
+            return JsonResponse({'MESSAGE':'ENTRY_CREATED','member':res}, status=201)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:
