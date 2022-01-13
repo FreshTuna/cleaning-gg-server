@@ -6,6 +6,7 @@ from django.http      import JsonResponse
 
 from matches.models import Match
 from members.models import Member
+from entries.models import Entry
 
 # Create your views here.
 
@@ -48,7 +49,16 @@ class MatchGetView(View):
                 'status': match.status,
             }
 
-            return JsonResponse({'MESSAGE':'MATCH_JOINED', 'match':res_dict}, status=200)
+            for entry in Entry.objects.filter(match_id=match.id) :
+                member = Member.objects.get(id=entry.member_id)
+                entry_list = [{
+                    'member_id': entry.member_id,
+                    'tier' : member.tier,
+                    'game_nickname': member.game_nickname,
+                    'nickname' : member.nickname
+                }]
+
+            return JsonResponse({'MESSAGE':'MATCH_JOINED', 'match':res_dict,'entry_list':entry_list}, status=200)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:

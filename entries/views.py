@@ -63,12 +63,16 @@ class EntryGetView(View):
         try:
             match_id = request.GET['match_id']
 
-            entry_list =[{
-                'member_id': entry.member_id,
-                'match_id' : entry.match_id
-            } for entry in Entry.objects.filter(match_id=match_id)]
+            for entry in Entry.objects.filter(match_id=match_id) :
+                member = Member.objects.get(id=entry.member_id)
+                entry_list = [{
+                    'member_id': entry.member_id,
+                    'tier' : member.tier,
+                    'game_nickname': member.game_nickname,
+                    'nickname' : member.nickname
+                }]
 
-            return JsonResponse({'entries':entry_list}, status=201)
+            return JsonResponse({'entry_list':entry_list}, status=200)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:
