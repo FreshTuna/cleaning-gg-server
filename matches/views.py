@@ -49,14 +49,17 @@ class MatchGetView(View):
                 'status': match.status,
             }
 
-            for entry in Entry.objects.filter(match_id=match.id) :
+            entry_list =[]
+
+            for entry in Entry.objects.filter(match_id=match.id):
                 member = Member.objects.get(id=entry.member_id)
-                entry_list = [{
+                print(member.nickname)
+                entry_list.append({
                     'member_id': entry.member_id,
                     'tier' : member.tier,
                     'game_nickname': member.game_nickname,
                     'nickname' : member.nickname
-                }]
+                })
 
             return JsonResponse({'MESSAGE':'MATCH_JOINED', 'match':res_dict,'entry_list':entry_list}, status=200)
         except json.decoder.JSONDecodeError:
