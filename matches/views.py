@@ -68,3 +68,15 @@ class MatchGetView(View):
             return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
         except TypeError:
             return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
+
+class MatchStartView(View):
+    def post(self, request):
+        try:
+
+            return JsonResponse({'MESSAGE':'MATCH_STARTED'}, status=200)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)

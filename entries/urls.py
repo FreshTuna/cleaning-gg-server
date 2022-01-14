@@ -1,12 +1,12 @@
 from django.urls import path
 
 from .views import (
-    EnrtyCreateView,
+    EntryCreateView,
     EntryGetView,
 )
 
 urlpatterns = [
-    path('create',EnrtyCreateView.as_view()),
+    path('create',EntryCreateView.as_view()),
     path('members', EntryGetView.as_view()),
 ]
 

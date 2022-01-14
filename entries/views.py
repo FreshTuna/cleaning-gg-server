@@ -10,7 +10,7 @@ from members.models import Member
 
 # Create your views here.
 
-class EnrtyCreateView(View):
+class EntryCreateView(View):
 
     def post(self, request):
         try:
