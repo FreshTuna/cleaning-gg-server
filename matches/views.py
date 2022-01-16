@@ -53,10 +53,12 @@ class MatchGetView(View):
 
             for entry in Entry.objects.filter(match_id=match.id):
                 member = Member.objects.get(id=entry.member_id)
-                print(member.nickname)
+            
                 entry_list.append({
                     'member_id': entry.member_id,
+                    'entry_id': entry.id,
                     'tier' : member.tier,
+                    'leader_yn': entry.leader_yn,
                     'game_nickname': member.game_nickname,
                     'nickname' : member.nickname
                 })
@@ -74,6 +76,37 @@ class MatchStartView(View):
         try:
 
             return JsonResponse({'MESSAGE':'MATCH_STARTED'}, status=200)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
+
+
+class MatchRandomizeView(View):
+    def post(self, request):
+        try:
+            data = json.loads(request.body)
+
+            match_id = data['match_id']
+
+            entries = Entry.objects.filter(match_id=match_id)
+
+            print(entries.filter(leader_yn=True))
+
+            leaders = entries.filter(leader_yn=True)
+
+            entries = entries.exclude(leader_yn=True)
+
+            over_gold = entries.filter(member__tier__in=['GOLD','PLATINUM','DIAMOND','MASTER','GRAND_MASTER','CHALLENGER'])
+
+            under_gold = entries.filter(member__tier__in=['BRONZE','SILVER'])
+
+            print(over_gold)
+            print(under_gold)
+            
+            return JsonResponse({'MESSAGE':'MATCH_RANDOMIZED'}, status=200)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:

@@ -19,8 +19,6 @@ class EntryCreateView(View):
             game_nickname = data['game_nickname']
             match_id      = data['match_id'] 
 
-            print(match_id)
-
             if not Match.objects.filter(id=match_id).exists():
                 return JsonResponse({'MESSAGE':'NO_MATCH_EXISTING'}, status=200)
 
@@ -41,6 +39,7 @@ class EntryCreateView(View):
                 'match_id': match_id,
                 'entry_id': entry.id,
                 'member_id': member.id,
+                'leader_yn': entry.leader_yn,
                 'game_nickname': member.game_nickname,
                 'tier': member.tier,
                 'nickname': member.nickname,
@@ -63,16 +62,93 @@ class EntryGetView(View):
         try:
             match_id = request.GET['match_id']
 
+            entry_list = []
+
             for entry in Entry.objects.filter(match_id=match_id) :
                 member = Member.objects.get(id=entry.member_id)
-                entry_list = [{
+
+                entry_list.append({
                     'member_id': entry.member_id,
+                    'entry_id': entry.id,
+                    'tier' : member.tier,
+                    'leader_yn': entry.leader_yn,
+                    'game_nickname': member.game_nickname,
+                    'nickname' : member.nickname
+                })
+
+            return JsonResponse({'entry_list':entry_list}, status=200)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
+
+
+class EntryDeleteView(View):
+
+    def post(self,request):
+        try:
+            data = json.loads(request.body)
+            print(data)
+            entry_id = data['entry_id']
+
+            target_entry = Entry.objects.get(id=entry_id)
+            match_id     = target_entry.match_id
+
+            target_entry.delete()
+
+            entry_list =[]
+
+            for entry in Entry.objects.filter(match_id=match_id) :
+                member = Member.objects.get(id=entry.member_id)
+                entry_list.append({
+                    'member_id': entry.member_id,
+                    'entry_id': entry.id,
+                    'leader_yn': entry.leader_yn,
                     'tier' : member.tier,
                     'game_nickname': member.game_nickname,
                     'nickname' : member.nickname
-                }]
+                })
 
-            return JsonResponse({'entry_list':entry_list}, status=200)
+            return JsonResponse({'MESSAGE':'DELETE_SUCCESS','entry_list': entry_list}, status=200)
+        except json.decoder.JSONDecodeError:
+            return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
+        except KeyError:
+            return JsonResponse({'MESSAGE':'KEY_ERROR'}, status=400)
+        except TypeError:
+            return JsonResponse({'MESSAGE':'TYPE_ERROR'}, status=400)
+
+
+class EntryLeaderView(View):
+
+    def put(self,request):
+        try:
+            data = json.loads(request.body)
+            print(data)
+            entry_id = data['entry_id']
+            is_leader = data['leader_yn']
+
+            target_entry = Entry.objects.get(id=entry_id)
+
+            target_entry.leader_yn = is_leader
+
+            target_entry.save()
+
+            entry_list =[]
+
+            for entry in Entry.objects.filter(match_id=target_entry.match_id):
+                member = Member.objects.get(id=entry.member_id)
+                entry_list.append({
+                    'member_id': entry.member_id,
+                    'entry_id': entry.id,
+                    'leader_yn': entry.leader_yn,
+                    'tier' : member.tier,
+                    'game_nickname': member.game_nickname,
+                    'nickname' : member.nickname
+                })
+
+            return JsonResponse({'MESSAGE':'LEADER_FLAG_CHANGE', 'entry_list':entry_list}, status=200)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:
