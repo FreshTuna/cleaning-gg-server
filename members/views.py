@@ -52,7 +52,7 @@ class SignInView(View):
             game_nickname = data['game_nickname']
 
             if not Member.objects.filter(game_nickname = game_nickname).exists():
-                return JsonResponse({'MESSAGE':'WRONG_GAME_NICKNAME'}, status=400)
+                return JsonResponse({'MESSAGE':'WRONG_GAME_NICKNAME'}, status=200)
             
             member = Member.objects.get(game_nickname = game_nickname)
 

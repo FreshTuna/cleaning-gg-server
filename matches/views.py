@@ -91,22 +91,32 @@ class MatchRandomizeView(View):
 
             match_id = data['match_id']
 
-            entries = Entry.objects.filter(match_id=match_id)
+            entries = Entry.objects.filter(match_id=match_id).order_by('leader_yn')
 
             print(entries.filter(leader_yn=True))
 
             leaders = entries.filter(leader_yn=True)
 
-            entries = entries.exclude(leader_yn=True)
+            # entries = entries.exclude(leader_yn=True)
 
             over_gold = entries.filter(member__tier__in=['GOLD','PLATINUM','DIAMOND','MASTER','GRAND_MASTER','CHALLENGER'])
 
             under_gold = entries.filter(member__tier__in=['BRONZE','SILVER'])
 
-            print(over_gold)
-            print(under_gold)
+            roaster =[]
+
+            for entry in entries:
+                member = Member.objects.get(id=entry.member_id)
+
+                roaster.append({
+                    'entry_id':entry.id,
+                    'member_id': entry.member_id,
+                    'match_id': entry.match_id,
+                    'game_nickname': member.game_nickname,
+                    'nickname' : member.nickname
+                })
             
-            return JsonResponse({'MESSAGE':'MATCH_RANDOMIZED'}, status=200)
+            return JsonResponse({'MESSAGE':'MATCH_RANDOMIZED', 'roaster':roaster}, status=200)
         except json.decoder.JSONDecodeError:
             return JsonResponse({'MESSAGE': 'JSON_DECODE_ERROR'}, status=400)
         except KeyError:
