@@ -22,6 +22,9 @@ class EntryCreateView(View):
             if not Match.objects.filter(id=match_id).exists():
                 return JsonResponse({'MESSAGE':'NO_MATCH_EXISTING'}, status=200)
 
+            if not Member.objects.filter(game_nickname=game_nickname).exists():
+                return JsonResponse({'MESSAGE':'NO_NICKNAME_EXISTING'}, status=200)
+
             member = Member.objects.get(game_nickname=game_nickname)
 
             if Entry.objects.filter(match_id=match_id, member_id=member.id).exists():
@@ -130,6 +133,9 @@ class EntryLeaderView(View):
             is_leader = data['leader_yn']
 
             target_entry = Entry.objects.get(id=entry_id)
+
+            if is_leader == True and Entry.objects.filter(leader_yn = True).count() > 1 :
+                return JsonResponse({'MESSAGE':'ALREADY_TWO_LEADERS'}, status=200)
 
             target_entry.leader_yn = is_leader
 
