@@ -39,10 +39,16 @@ class MatchCreateView(View):
 class MatchGetView(View):
     def get(self, request):
         try:
-            if not Match.objects.filter(status='MATCHING'):
+
+            status = "MATCHING"
+
+            if not Match.objects.filter(status__in=['MATCHING','PLAYING']):
                 return JsonResponse({'MESSAGE':'NO_MATCH'}, status=200)
 
-            match = Match.objects.get(status='MATCHING')
+            if Match.objects.filter(status="PLAYING").exists():
+                status = "PLAYING"
+
+            match = Match.objects.get(status=status)
 
             res_dict = {
                 'match_id': match.id,
@@ -52,7 +58,7 @@ class MatchGetView(View):
 
             entry_list =[]
 
-            for entry in Entry.objects.filter(match_id=match.id):
+            for entry in Entry.objects.filter(match_id=match.id).order_by('-team','-leader_yn'):
                 member = Member.objects.get(id=entry.member_id)
             
                 entry_list.append({
@@ -60,6 +66,7 @@ class MatchGetView(View):
                     'entry_id': entry.id,
                     'tier' : member.tier,
                     'leader_yn': entry.leader_yn,
+                    'team': entry.team,
                     'game_nickname': member.game_nickname,
                     'nickname' : member.nickname
                 })
@@ -91,6 +98,13 @@ class MatchRandomizeView(View):
             data = json.loads(request.body)
 
             match_id = data['match_id']
+            game_nickname = data['game_nickname']
+
+            requester = Member.objects.get(game_nickname=game_nickname)
+
+            match = Match.objects.get(id=match_id)
+
+            owner_nickname = Member.objects.get(id=match.owner).game_nickname
 
             if not Entry.objects.filter(match_id=match_id).count() == 10:
                 return JsonResponse({'MESSAGE':'ENTRY_NOT_FULL'}, status=200)
@@ -101,6 +115,11 @@ class MatchRandomizeView(View):
             BLUE_LINE = ['TOP','JUNGLE','MID','ADC','SUPPORT']
 
             leaders = entries.filter(leader_yn=True)
+
+            print("requester: ",requester.id,"leaders: " ,leaders, "match_owner: ",owner_nickname)
+
+            if not (requester.id in leaders.values_list('member_id', flat=True) or game_nickname == owner_nickname):
+                return JsonResponse({'MESSAGE':'NOT_ALLOWED','MATCH_OWNER':owner_nickname}, status=200)
 
             entries = entries.exclude(leader_yn=True)
 
@@ -130,6 +149,8 @@ class MatchRandomizeView(View):
                         'nickname' : member.nickname,
                         'leader_yn' : True,
                     })
+                    leader.team = "RED"
+                    leader.save()
                     if member.line in RED_LINE: RED_LINE.remove(member.line)
                 else:
                     blue_team.append({
@@ -140,6 +161,8 @@ class MatchRandomizeView(View):
                         'nickname' : member.nickname,
                         'leader_yn' : True,
                     })
+                    leader.team = "BLUE"
+                    leader.save()
                     if member.line in BLUE_LINE: BLUE_LINE.remove(member.line)
 
             for index, entry in enumerate(over_gold):
@@ -154,6 +177,8 @@ class MatchRandomizeView(View):
                         'nickname' : member.nickname,
                         'leader_yn' : False,
                     })
+                    entry.team = "RED"
+                    entry.save()
                     if member.line in RED_LINE: RED_LINE.remove(member.line)
                 else:
                     blue_team.append({
@@ -164,6 +189,8 @@ class MatchRandomizeView(View):
                          'nickname' : member.nickname,
                          'leader_yn' : False,
                     })
+                    entry.team = "BLUE"
+                    entry.save()
                     if member.line in BLUE_LINE: BLUE_LINE.remove(member.line)
 
             pool_size = len(under_gold)
@@ -178,6 +205,8 @@ class MatchRandomizeView(View):
                         temp_pool.append(temp.first())
 
                     chosen_entry = choice(temp_pool)
+                    chosen_entry.team = "RED"
+                    chosen_entry.save()
 
                     under_gold = under_gold.exclude(id = chosen_entry.id)
 
@@ -200,6 +229,8 @@ class MatchRandomizeView(View):
                         temp_pool.append(temp.first())
 
                     chosen_entry = choice(temp_pool)
+                    chosen_entry.team = "BLUE"
+                    chosen_entry.save()
 
                     under_gold = under_gold.exclude(id = chosen_entry.id)
 
@@ -224,6 +255,9 @@ class MatchRandomizeView(View):
                 'red_team':red_team,
                 'blue_team':blue_team
             }
+
+            match.status = "PLAYING"
+            match.save()
             
             return JsonResponse({'MESSAGE':'MATCH_RANDOMIZED','roaster':roaster}, status=200)
         except json.decoder.JSONDecodeError:
